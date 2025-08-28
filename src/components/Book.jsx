@@ -199,6 +199,46 @@ const Book = () => {
     [disableFlipBook],
   )
 
+  // --- Touch start for hammer ---
+  const handleHammerTouchStart = useCallback((e) => {
+    if (!hammerRef.current) return
+    e.preventDefault()
+
+    const touch = e.touches[0]
+    const rect = hammerRef.current.getBoundingClientRect()
+
+    // store offset between finger and hammer position
+    dragOffset.current = {
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top,
+    }
+
+    setIsCustomDragging(true)
+    setIsDragging(true)
+  }, [])
+
+  // --- Touch move for hammer ---
+  const handleHammerTouchMove = useCallback((e) => {
+    if (!isCustomDragging || !hammerRef.current) return
+    e.preventDefault()
+    e.stopPropagation()
+
+    const touch = e.touches[0]
+    const interactiveZone = document.querySelector(".interactive-zone")
+    if (!interactiveZone) return
+
+    const rect = interactiveZone.getBoundingClientRect()
+    const newX = ((touch.clientX - rect.left - dragOffset.current.x) / rect.width) * 100
+    const newY = ((touch.clientY - rect.top - dragOffset.current.y) / rect.height) * 100
+
+    // clamp values so hammer stays inside zone
+    const clampedX = Math.max(0, Math.min(85, newX))
+    const clampedY = Math.max(0, Math.min(85, newY))
+
+    hammerRef.current.style.left = `${clampedX}%`
+    hammerRef.current.style.top = `${clampedY}%`
+  }, [isCustomDragging])
+
   // Update handleTouchMove with ear dragging logic
   const handleTouchMove = useCallback(
     (e) => {
@@ -436,6 +476,7 @@ const Book = () => {
               }}
               onMouseDown={!hammerBreakPosition ? handleHammerMouseDown : undefined}
               onTouchStart={!hammerBreakPosition ? handleTouchStart : undefined}
+              onTouchMove={!hammerBreakPosition ? handleHammerTouchMove : undefined}
             />
           </div>
         </div>
