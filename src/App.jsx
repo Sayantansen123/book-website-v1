@@ -17,7 +17,7 @@ function App() {
   useEffect(() => {
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     const isPhone = window.innerWidth <= 768;
-    console.log(isPhone)
+    //console.log(isPhone)
 
     if (isTouchDevice && isPhone) {
       setIsMobile(true);

@@ -63,7 +63,7 @@ const Book = () => {
 
   const handleFlip = (e) => {
     setCurrentPage(e.data)
-    console.log(currentPage) // ✅ Update page number on flip
+
   }
 
   const enableFlipBook = useCallback(() => {
@@ -75,7 +75,7 @@ const Book = () => {
 
   const handleHammerMouseDown = useCallback(
     (e) => {
-      console.log("Hammer mouse down - starting custom drag")
+      //console.log("Hammer mouse down - starting custom drag")
       e.stopPropagation()
       const rect = e.currentTarget.getBoundingClientRect()
       dragOffset.current = {
@@ -120,12 +120,12 @@ const Book = () => {
   const handleMouseUp = useCallback(
     (e) => {
       if (!isCustomDragging) return
-      console.log("Mouse up - checking drop")
+      //console.log("Mouse up - checking drop")
       setIsCustomDragging(false)
       setIsDragging(false)
       // Check if dropped anywhere on the glass image (page3.jpg)
       const page3Background = document.querySelector(".glass-overlay")
-      console.log(page3Background.getBoundingClientRect())
+      //console.log(page3Background.getBoundingClientRect())
       if (page3Background) {
         const backgroundRect = page3Background.getBoundingClientRect()
         const hammerElement = document.querySelector(".draggable-hammer")
@@ -144,7 +144,7 @@ const Book = () => {
             hammerCenterY >= backgroundRect.top &&
             hammerCenterY <= backgroundRect.bottom
           ) {
-            console.log("Hammer touched the glass image!")
+            // console.log("Hammer touched the glass image!")
             setGlassBreakVisible(true)
 
             // Store current hammer position where it broke the glass
@@ -184,7 +184,7 @@ const Book = () => {
 
   const handleTouchStart = useCallback(
     (e) => {
-      console.log("Touch start - starting custom drag")
+      //console.log("Touch start - starting custom drag")
       e.stopPropagation()
       const touch = e.touches[0]
       const rect = e.currentTarget.getBoundingClientRect()
@@ -220,7 +220,7 @@ const Book = () => {
   // --- Touch move for hammer ---
   const handleHammerTouchMove = useCallback((e) => {
     if (!isCustomDragging || !hammerRef.current) return
-    e.preventDefault()
+
     e.stopPropagation()
 
     const touch = e.touches[0]
@@ -272,7 +272,7 @@ const Book = () => {
   const handleTouchEnd = useCallback(
     (e) => {
       if (!isCustomDragging) return
-      console.log("Touch end - checking drop")
+      //console.log("Touch end - checking drop")
       setIsCustomDragging(false)
       setIsDragging(false)
       // Check if dropped anywhere on the glass image
@@ -290,7 +290,7 @@ const Book = () => {
             hammerCenterY >= backgroundRect.top &&
             hammerCenterY <= backgroundRect.bottom
           ) {
-            console.log("Hammer touched the glass image via touch!")
+            //console.log("Hammer touched the glass image via touch!")
             setGlassBreakVisible(true)
 
             // Store current hammer position where it broke the glass
