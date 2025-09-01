@@ -54,10 +54,11 @@ const EarPage74 = () => {
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center z-30">
         <div className="bg-white/90 px-4 py-2 rounded-full shadow-lg border">
           <p className="text-sm text-gray-700 font-medium">
-            {placedEars.length === 0
-              ? "Drop ears from the previous page here!"
-              : `${placedEars.length} ear${placedEars.length !== 1 ? 's' : ''} placed`
-            }
+            {/* {placedEars.length === 0
+              ? "Drag the ears to any desired part of the body"
+              : `${placedEars.length} ear${placedEars.length !== 1 ? 's' : ''} placed` */}
+            {/* } */}
+            Drag the ears  to any desired part of the body
           </p>
         </div>
       </div>

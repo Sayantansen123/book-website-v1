@@ -39,6 +39,19 @@ const Book = () => {
   // Update the combined dragging state
   const isAnyDragging = isDragging || isCustomDragging || isEarDragging
 
+  // Function to play glass breaking sound
+  const playGlassBreakSound = useCallback(() => {
+    try {
+      const audio = new Audio('/sounds/glasssound.mp3')
+      audio.volume = 0.5 // Adjust volume as needed
+      audio.play().catch(error => {
+        console.warn('Could not play glass break sound:', error)
+      })
+    } catch (error) {
+      console.warn('Could not load glass break sound:', error)
+    }
+  }, [])
+
   const bounceOffVariant = {
     initial: { opacity: 1, scale: 1, y: 0 },
     exit: {
@@ -51,6 +64,7 @@ const Book = () => {
       },
     },
   }
+
 
   // Safely disable/enable flip book
   const disableFlipBook = useCallback(() => {
@@ -144,14 +158,45 @@ const Book = () => {
             hammerCenterY <= backgroundRect.bottom
           ) {
             console.log("Hammer touched the glass image!")
+            
+            // Play glass breaking sound
+            playGlassBreakSound()
+            
             setGlassBreakVisible(true)
-            // Glass crack stays visible - no auto-hide
+
+            // Store current hammer position where it broke the glass
+            const currentLeft = parseFloat(hammerRef.current.style.left) || hammerPosition.x
+            const currentTop = parseFloat(hammerRef.current.style.top) || hammerPosition.y
+            setHammerBreakPosition({ x: currentLeft, y: currentTop })
+
+            // Return to original position after 5 seconds
+            // Hide glass break animation after GIF completes (approximately 2-3 seconds)
+            setTimeout(() => {
+              setGlassBreakVisible(false)
+            }, 3000) // Adjust this timing based on your GIF duration
+
+            // Return hammer to original position after glass animation disappears
+            setTimeout(() => {
+              if (hammerRef.current) {
+                hammerRef.current.style.transition = 'left 1s ease-in-out, top 1s ease-in-out'
+                hammerRef.current.style.left = `${hammerPosition.x}%`
+                hammerRef.current.style.top = `${hammerPosition.y}%`
+
+                // Reset after animation
+                setTimeout(() => {
+                  if (hammerRef.current) {
+                    hammerRef.current.style.transition = ''
+                  }
+                  setHammerBreakPosition(null)
+                }, 1000)
+              }
+            }, 2000) // Start hammer return 500ms after GIF disappears
           }
         }
       }
       enableFlipBook()
     },
-    [isCustomDragging, enableFlipBook, hammerPosition],
+    [isCustomDragging, enableFlipBook, hammerPosition, playGlassBreakSound],
   )
 
   const handleTouchStart = useCallback(
@@ -170,6 +215,46 @@ const Book = () => {
     },
     [disableFlipBook],
   )
+
+  // --- Touch start for hammer ---
+  const handleHammerTouchStart = useCallback((e) => {
+    if (!hammerRef.current) return
+    e.preventDefault()
+
+    const touch = e.touches[0]
+    const rect = hammerRef.current.getBoundingClientRect()
+
+    // store offset between finger and hammer position
+    dragOffset.current = {
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top,
+    }
+
+    setIsCustomDragging(true)
+    setIsDragging(true)
+  }, [])
+
+  // --- Touch move for hammer ---
+  const handleHammerTouchMove = useCallback((e) => {
+    if (!isCustomDragging || !hammerRef.current) return
+    e.preventDefault()
+    e.stopPropagation()
+
+    const touch = e.touches[0]
+    const interactiveZone = document.querySelector(".interactive-zone")
+    if (!interactiveZone) return
+
+    const rect = interactiveZone.getBoundingClientRect()
+    const newX = ((touch.clientX - rect.left - dragOffset.current.x) / rect.width) * 100
+    const newY = ((touch.clientY - rect.top - dragOffset.current.y) / rect.height) * 100
+
+    // clamp values so hammer stays inside zone
+    const clampedX = Math.max(0, Math.min(85, newX))
+    const clampedY = Math.max(0, Math.min(85, newY))
+
+    hammerRef.current.style.left = `${clampedX}%`
+    hammerRef.current.style.top = `${clampedY}%`
+  }, [isCustomDragging])
 
   // Update handleTouchMove with ear dragging logic
   const handleTouchMove = useCallback(
@@ -223,17 +308,48 @@ const Book = () => {
             hammerCenterY <= backgroundRect.bottom
           ) {
             console.log("Hammer touched the glass image via touch!")
+            
+            // Play glass breaking sound
+            playGlassBreakSound()
+            
             setGlassBreakVisible(true)
-            // Glass crack stays visible - no auto-hide
+
+            // Store current hammer position where it broke the glass
+            const currentLeft = parseFloat(hammerRef.current.style.left) || hammerPosition.x
+            const currentTop = parseFloat(hammerRef.current.style.top) || hammerPosition.y
+            setHammerBreakPosition({ x: currentLeft, y: currentTop })
+
+            // Return to original position after 5 seconds
+            // Hide glass break animation after GIF completes (approximately 2-3 seconds)
+            setTimeout(() => {
+              setGlassBreakVisible(false)
+            }, 1000) // Adjust this timing based on your GIF duration
+
+            // Return hammer to original position after glass animation disappears
+            setTimeout(() => {
+              if (hammerRef.current) {
+                hammerRef.current.style.transition = 'left 1s ease-in-out, top 1s ease-in-out'
+                hammerRef.current.style.left = `${hammerPosition.x}%`
+                hammerRef.current.style.top = `${hammerPosition.y}%`
+
+                // Reset after animation
+                setTimeout(() => {
+                  if (hammerRef.current) {
+                    hammerRef.current.style.transition = ''
+                  }
+                  setHammerBreakPosition(null)
+                }, 1000)
+              }
+            }, 3500) // Start hammer return 500ms after GIF disappears
           }
         }
       }
       enableFlipBook()
     },
-    [isCustomDragging, enableFlipBook, hammerPosition],
+    [isCustomDragging, enableFlipBook, hammerPosition, playGlassBreakSound],
   )
 
-  // Add global mouse/touch end handlers for ears
+
   const handleGlobalMouseUp = useCallback(() => {
     if (draggingEar) {
       setDraggingEar(null)
@@ -270,6 +386,8 @@ const Book = () => {
     },
     [isDragging],
   )
+
+
 
   return (
     <div
@@ -350,36 +468,40 @@ const Book = () => {
               />
             </div>
           )}
-          {/* Interactive Zone - Only visible when glass is NOT cracked */}
-          {!glassBreakVisible && (
-            <div
-              className="interactive-zone absolute inset-0 z-5"
-              onMouseDown={handleInteractiveZoneEvents}
-              onTouchStart={handleInteractiveZoneEvents}
-              onMouseMove={handleInteractiveZoneEvents}
-              onTouchMove={handleInteractiveZoneEvents}
-            >
-              {/* Draggable Hammer */}
-              <img
-                ref={hammerRef}
-                src="/book-pages/hammer.png"
-                alt="Hammer"
-                className={`draggable-hammer absolute w-20 z-20  ${isDragging ? "cursor-grabbing scale-130 " : "cursor-grab hover:scale-105"
-                  }`}
-                style={{
-                  left: `${hammerPosition.x}%`,
-                  top: `${hammerPosition.y}%`,
-                  userSelect: "none",
-                  WebkitUserSelect: "none",
-                  pointerEvents: "auto",
-                  filter: isDragging ? "none" : "none",
-                }}
-                onMouseDown={handleHammerMouseDown}
-                onTouchStart={handleTouchStart}
-              />
-            </div>
-          )}
+          {/* Interactive Zone - Always visible now to show hammer even when glass is cracked */}
+          <div
+            className="interactive-zone absolute inset-0 z-60"
+            onMouseDown={handleInteractiveZoneEvents}
+            onTouchStart={handleInteractiveZoneEvents}
+            onMouseMove={handleInteractiveZoneEvents}
+            onTouchMove={handleInteractiveZoneEvents}
+          >
+            {/* Draggable Hammer - Always visible but with conditional interactivity */}
+            <img
+              ref={hammerRef}
+              src="/book-pages/hammer.png"
+              alt="Hammer"
+              className={`draggable-hammer absolute w-20 z-20  ${isDragging && !hammerBreakPosition
+                ? "cursor-grabbing scale-130 "
+                : !hammerBreakPosition
+                  ? "cursor-grab hover:scale-105"
+                  : ""
+                }`}
+              style={{
+                left: hammerBreakPosition ? `${hammerBreakPosition.x}%` : `${hammerPosition.x}%`,
+                top: hammerBreakPosition ? `${hammerBreakPosition.y}%` : `${hammerPosition.y}%`,
+                userSelect: "none",
+                WebkitUserSelect: "none",
+                pointerEvents: hammerBreakPosition ? "none" : "auto",
+                filter: isDragging ? "none" : "none",
+              }}
+              onMouseDown={!hammerBreakPosition ? handleHammerMouseDown : undefined}
+              onTouchStart={!hammerBreakPosition ? handleTouchStart : undefined}
+              onTouchMove={!hammerBreakPosition ? handleHammerTouchMove : undefined}
+            />
+          </div>
         </div>
+
         {/* Pages 4-18 */}
         {Array.from({ length: 15 }, (_, i) => (
           <div key={i + 4} className={`demoPage bg-blue-50  ${(i + 4) % 2 !== 0 ? "border-l" : ""}`}>

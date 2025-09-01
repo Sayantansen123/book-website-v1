@@ -83,17 +83,32 @@ const SpillTheBeansSecondPage = ({ clickedBeans }) => {
                             key={`bean-${bean.id}`}
                             src={bean.src}
                             alt={`Bean ${bean.id}`}
-                            initial={{ opacity: 0, scale: 2 }}
-                            animate={{ opacity: isVisible ? 1 : 0, scale: isVisible ? 1 : 2, rotate: bean.rotation }}
+                            initial={{ 
+                                opacity: 0, 
+                                scale: 0.5,
+                                y: -120,
+                                rotate: bean.rotation + 270
+                            }}
+                            animate={{ 
+                                opacity: isVisible ? 1 : 0, 
+                                scale: isVisible ? 1 : 0.5,
+                                y: isVisible ? 0 : -120,
+                                rotate: bean.rotation
+                            }}
                             exit={{ opacity: 1 }}
-                            transition={{ duration: 1 }}
+                            transition={{ 
+                                duration: 0.9,
+                                type: "spring",
+                                stiffness: 120,
+                                damping: 14,
+                                delay: (bean.id - 1) * 0.08
+                            }}
                             className={`absolute transition-opacity duration-500 ease-in-out  ${clickedBeans.includes(bean.id) ? "opacity-100" : "opacity-0"}`}
                             style={{
                                 left: `${bean.x}%`,
                                 top: `${bean.y}%`,
                                 width: `${bean.width}px`,
                                 height: `${bean.height}px`,
-
                                 zIndex: 10,
                             }}
                         />
